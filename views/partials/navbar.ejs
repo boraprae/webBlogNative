@@ -1,0 +1,43 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container px-4 px-lg-5 ">
+        <a class="navbar-brand" href="#!"><img src="/asset/fishing.png" alt=""> Super Tuna</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span
+                class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                <li class="nav-item"><a class="nav-link active" aria-current="page" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/blogs">Blog</a></li>
+            </ul>
+        </div>
+
+        <button class="btn btn-outline-dark" id="btnSignIn">
+            Sign In
+        </button>
+
+    </div>
+</nav>
+
+<!-- Sign In Modal-->
+<div class="modal fade" id="signInModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Sign in to Fisherman World</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Username
+                <input type="text" class="form-control" id="txtUsername" maxlength="20">
+                Password
+                <input type="text" class="form-control" id="txtPassword" maxlength="20">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="btnSignInSubmit">Sign In</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/script/login.js"></script>
