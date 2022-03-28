@@ -4,8 +4,12 @@ const { is } = require('express/lib/request');
 const res = require('express/lib/response');
 const { url } = require('inspector');
 const jwt = require('jsonwebtoken');
-const app = express();
 const path = require('path');
+const bcrypt = require('bcrypt');
+const con = require('./db-config');
+const message = require('./error-message');
+
+const app = express();
 
 
 app.set('view engine', 'ejs');
@@ -71,11 +75,6 @@ app.get('/getBlog', (_req, res) => {
     res.json(data);
 });
 
-//*------------- Mobile API ------------*
-app.get('/mobile/blog', (_req, res) => {
-    res.json(data);
-});
-
 // app.post("/login", (req, res) => {
 //     const username = req.body.username;
 //     const password = req.body.password;
@@ -112,17 +111,6 @@ app.post('/login', (req, res) => {
     }, 3000);
 });
 
-app.get('/mobile/blogs', checkUser, (req, res) => {
-    // get userID from token
-    const result = req.decoded;
-    const userID = result.user_id;
-    // filter blog posts for this user
-    const posts = data.filter((value) => {
-        return value.user_id == userID;
-    });
-    res.json(posts);
-});
-
 
 app.post("/editData", (req, res) => {
     const id = req.body.ID;
@@ -156,7 +144,7 @@ app.delete("/post", (req, res) => {
             }
             else {
                 //delete the post in DB
-               // res.send(decoded.user);
+                // res.send(decoded.user);
             }
         });
     }
@@ -200,18 +188,79 @@ app.post('/jwtDecode', (req, res) => {
             }
         });
     }
-    // return res.send(splitToken[1]);
-    // if (token == undefined || token == null) {
-    //     res.status(400).send('No token');
-    // } else {
-    //     jwt.verify(token, 'passwordIsPasswordAjanGoSaid', (err, decoded) => {
-    //         if (err) {
-    //             res.status(400).send('Incorrect token');
-    //         } else {
-    //             res.send(decoded);
-    //         }
-    //     });
+});
+
+//*------------- Mobile API ------------*
+app.get('/mobile/blog', (_req, res) => {
+    res.json(data);
+});
+
+app.post('/mobile/login', (req, res) => {
+    const { username, password } = req.body;
+    const sql = 'SELECT user_id, user_password, user_role FROM user WHERE user_username = ?';
+
+    con.query(sql, [username], (err, result) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).send(process.env.SERVER_ERROR_MESSAGE);
+        }
+        if (result.length != 1) {
+            console.log(message.SERVER_WRONG_USERNAME_ERROR_MESSAGE);
+            return res.status(500).send(message.SERVER_WRONG_USERNAME_ERROR_MESSAGE);
+        }
+        //!inactive user, role = 0
+        if (result.user_role == 0) {
+            console.log(message.DISABLE_USER_ERROR_MESSAGE);
+            return res.status(400).send(message.DISABLE_USER_ERROR_MESSAGE);
+        }
+        //!verify password
+        bcrypt.compare(password, result[0].user_password, (err, same) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).send(message.SERVER_ERROR_MESSAGE);
+            }
+            //?Wrong password
+            if(!same){
+                return res.status(400).send(message.SERVER_WRONG_PASSWORD_ERROR_MESSAGE);
+            }
+            //?Correct password
+            const payload = {'user_username': username, 'user_id': result[0].user_id, 'user_role': result[0].user_role};
+            const token = jwt.sign(payload, process.env.JWT_KEY, {expiresIn: '1d'});
+            res.json({token: token});
+        });
+    });
+    // if (result.length == 1) {
+    //     const payload = { user: username, user_id: result[0].user_id };
+    //     const token = jwt.sign(payload, process.env.JWT_KEY, { expiresIn: '1d' });
+    //     res.json({ url: '/blogs', token: token });
+    //     // res.send('/blogs');
     // }
+    // else {
+    //     res.status(400).send('Wrong username or password');
+    // }
+});
+
+app.get('/mobile/blogs', checkUser, (req, res) => {
+    // get userID from token
+    const result = req.decoded;
+    const userID = result.user_id;
+    // filter blog posts for this user
+    const posts = data.filter((value) => {
+        return value.user_id == userID;
+    });
+    res.json(posts);
+});
+
+//*----------- Utils -------------------*
+app.get('/password/:password', (req, res) => {
+    const raw = req.params.password;
+    bcrypt.hash(raw, 10, (err, pass) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).send('Server error');
+        }
+        res.send(pass);
+    });
 });
 
 //*------------ Starts Server ----------*
